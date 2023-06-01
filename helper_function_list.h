@@ -54,8 +54,8 @@ helper_function_list_init(size_t capacity,
 bool helper_function_list_resize(HelperFunctionList *self, size_t new_capacity);
 
 bool helper_function_list_push_back(HelperFunctionList *self,
-                                    const char *functionName, const void *functionAddr, const UK_EBPF_HELPER_RET_TYPE_t retType,
-                                    const UK_EBPF_HELPER_ARG_TYPE_NUM_t argTypeCount, const UK_EBPF_HELPER_ARG_TYPE_t argTypes[]);
+                                    const char *functionName, const void *functionAddr, UK_EBPF_HELPER_RET_TYPE_t retType,
+                                    UK_EBPF_HELPER_ARG_TYPE_NUM_t argTypeCount, const UK_EBPF_HELPER_ARG_TYPE_t argTypes[]);
 
 void helper_function_list_apply_function(HelperFunctionList *self, void (*apply)(struct HelperFunctionEntry *));
 

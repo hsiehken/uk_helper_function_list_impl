@@ -1,6 +1,5 @@
 #include "helper_function_list.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 
 struct HelperFunctionList *

@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 
 #include "helper_function_list.h"
 
