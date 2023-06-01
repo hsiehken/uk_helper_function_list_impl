@@ -116,7 +116,29 @@ HelperFunctionList *helper_generate_dummy_data() {
     return list;
 }
 
+void test_independent_lists_work() {
+    HelperFunctionList *list1 = helper_generate_dummy_data();
+    HelperFunctionList *list2 = helper_generate_dummy_data();
+
+    assert(list1->m_length == 7);
+    assert(list1->m_capacity == 8);
+    assert(list2->m_length == 7);
+    assert(list2->m_capacity == 8);
+
+    list1->m_entries[0].m_function_signature.m_function_name[0] = 'a';
+    assert(strcmp(list1->m_entries[0].m_function_signature.m_function_name, "aest0") == 0);
+    assert(strcmp(list2->m_entries[0].m_function_signature.m_function_name, "test0") == 0);
+
+    list1->m_entries[0] = list1->m_entries[1];
+    assert(strcmp(list1->m_entries[0].m_function_signature.m_function_name, "test1") == 0);
+
+
+    helper_function_list_destroy(list1);
+    helper_function_list_destroy(list2);
+}
+
 void test_remove_from_front_work() {
+    printf("TEST 1 ");
     HelperFunctionList *list = helper_generate_dummy_data();
     helper_function_list_remove_elem(list, "test0");
 
@@ -124,9 +146,11 @@ void test_remove_from_front_work() {
     assert(list->m_capacity == 8);
     assert(strcmp(list->m_entries[0].m_function_signature.m_function_name, "test1") == 0);
     assert(strcmp(list->m_entries[6].m_function_signature.m_function_name, "test6") == 0);
+    helper_function_list_destroy(list);
 }
 
 void test_remove_from_back_work() {
+    printf("TEST 2");
     HelperFunctionList *list = helper_generate_dummy_data();
     helper_function_list_remove_elem(list, "test6");
 
@@ -177,6 +201,8 @@ int main() {
     test_resize_before_push_back_work();
     test_resize_work();
     test_resize_0_work();
+
+    test_independent_lists_work();
 
     test_remove_from_front_work();
     test_remove_from_back_work();
