@@ -9,7 +9,7 @@ void entry_init_dummy(HelperFunctionEntry *self, const char *functionName, const
                       const UK_EBPF_HELPER_ARG_TYPE_NUM_t argTypeCount, const UK_EBPF_HELPER_ARG_TYPE_t argTypes[]) {
     self->m_function_addr = functionAddr;
     self->m_function_signature.m_function_name = malloc(strlen(functionName) + 1);
-    strncpy(self->m_function_signature.m_function_name, functionName, strlen(functionName));
+    strncpy(self->m_function_signature.m_function_name, functionName, strlen(functionName)+1);
 
     self->m_function_signature.m_return_type = retType;
     self->m_function_signature.m_num_args = argTypeCount;
@@ -101,7 +101,6 @@ HelperFunctionList *helper_generate_dummy_data() {
     assert(helper_function_list_push_back(list, "test5", (void *) 42, 5, sizeof(dummy_arg_types), dummy_arg_types));
     assert(helper_function_list_push_back(list, "test6", (void *) 42, 6, sizeof(dummy_arg_types), dummy_arg_types));
 
-    printf("TEST %s \n", list->m_entries[0].m_function_signature.m_function_name);
     assert(strcmp(list->m_entries[0].m_function_signature.m_function_name, "test0") == 0);
     assert(strcmp(list->m_entries[1].m_function_signature.m_function_name, "test1") == 0);
     assert(strcmp(list->m_entries[2].m_function_signature.m_function_name, "test2") == 0);
@@ -129,8 +128,9 @@ void test_independent_lists_work() {
     assert(strcmp(list1->m_entries[0].m_function_signature.m_function_name, "aest0") == 0);
     assert(strcmp(list2->m_entries[0].m_function_signature.m_function_name, "test0") == 0);
 
-    list1->m_entries[0] = list1->m_entries[1];
-    assert(strcmp(list1->m_entries[0].m_function_signature.m_function_name, "test1") == 0);
+    list1->m_entries[0] = list1->m_entries[6];
+    list1->m_length--;
+    assert(strcmp(list1->m_entries[0].m_function_signature.m_function_name, "test6") == 0);
 
 
     helper_function_list_destroy(list1);
@@ -138,7 +138,6 @@ void test_independent_lists_work() {
 }
 
 void test_remove_from_front_work() {
-    printf("TEST 1 ");
     HelperFunctionList *list = helper_generate_dummy_data();
     helper_function_list_remove_elem(list, "test0");
 
@@ -150,15 +149,13 @@ void test_remove_from_front_work() {
 }
 
 void test_remove_from_back_work() {
-    printf("TEST 2");
     HelperFunctionList *list = helper_generate_dummy_data();
     helper_function_list_remove_elem(list, "test6");
 
     assert(list->m_length == 6);
     assert(list->m_capacity == 8);
-    printf("TEST %s \n", list->m_entries[0].m_function_signature.m_function_name);
     assert(strcmp(list->m_entries[0].m_function_signature.m_function_name, "test0") == 0);
-    assert(strcmp(list->m_entries[6].m_function_signature.m_function_name, "test5") == 0);
+    assert(strcmp(list->m_entries[5].m_function_signature.m_function_name, "test5") == 0);
 }
 
 void test_remove_from_middle_work_0() {
@@ -188,11 +185,22 @@ void test_remove_from_middle_work_1() {
     assert(strcmp(list->m_entries[2].m_function_signature.m_function_name, "test3") == 0);
     assert(strcmp(list->m_entries[3].m_function_signature.m_function_name, "test5") == 0);
     assert(strcmp(list->m_entries[4].m_function_signature.m_function_name, "test6") == 0);
-
 }
 
 void test_remove_from_empty_work() {
+    HelperFunctionList *list = helper_generate_dummy_data();
+    helper_function_list_remove_elem(list, "test100");
+    helper_function_list_remove_elem(list, "test200");
 
+    assert(list->m_length == 7);
+    assert(list->m_capacity == 8);
+    assert(strcmp(list->m_entries[0].m_function_signature.m_function_name, "test0") == 0);
+    assert(strcmp(list->m_entries[1].m_function_signature.m_function_name, "test1") == 0);
+    assert(strcmp(list->m_entries[2].m_function_signature.m_function_name, "test2") == 0);
+    assert(strcmp(list->m_entries[3].m_function_signature.m_function_name, "test3") == 0);
+    assert(strcmp(list->m_entries[4].m_function_signature.m_function_name, "test4") == 0);
+    assert(strcmp(list->m_entries[5].m_function_signature.m_function_name, "test5") == 0);
+    assert(strcmp(list->m_entries[6].m_function_signature.m_function_name, "test6") == 0);
 }
 
 int main() {
