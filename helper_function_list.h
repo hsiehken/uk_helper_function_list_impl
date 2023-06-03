@@ -4,64 +4,66 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-typedef enum UK_EBPF_HELPER_RET_TYPE {
-    VOID = 0,
-} __attribute__((__packed__)) UK_EBPF_HELPER_RET_TYPE;
-typedef uint8_t UK_EBPF_HELPER_RET_TYPE_t;
-
-typedef enum UK_EBPF_HELPER_ARG_TYPE {
-    DUMMY = 0,
-} __attribute__((__packed__)) UK_EBPF_HELPER_ARG_TYPE;
-typedef uint8_t UK_EBPF_HELPER_ARG_TYPE_t;
+#include "ebpf_helper_model.h"
 
 typedef uint8_t UK_EBPF_HELPER_ARG_TYPE_NUM_t;
 
 #define UK_EBPF_HELPER_FUNCTION_MAX_NAME_LENGTH 256
 
+typedef unsigned int UK_UBPF_INDEX_t;
+
 typedef struct HelperFunctionSignature {
     char *m_function_name;
-    UK_EBPF_HELPER_RET_TYPE_t m_return_type;
+    ebpf_return_type_t m_return_type;
     UK_EBPF_HELPER_ARG_TYPE_NUM_t m_num_args;
-    UK_EBPF_HELPER_ARG_TYPE_t *m_arg_types;
+    ebpf_argument_type_t m_arg_types[];
 } HelperFunctionSignature;
 
+typedef struct HelperFunctionEntry HelperFunctionEntry;
 typedef struct HelperFunctionEntry {
+    HelperFunctionEntry *m_next;
+
+    UK_UBPF_INDEX_t m_index;
     const void *m_function_addr;
     HelperFunctionSignature m_function_signature;
 } HelperFunctionEntry;
 
+/**
+ * An linked list of helper function information.
+ */
 typedef struct HelperFunctionList {
     size_t m_length;
-    size_t m_capacity;
+    HelperFunctionEntry *m_head;
+    HelperFunctionEntry *m_tail;
 
-    void (*m_entry_init)(HelperFunctionEntry *self, const char *functionName, const void *functionAddr,
-                         const UK_EBPF_HELPER_RET_TYPE_t retType,
-                         const UK_EBPF_HELPER_ARG_TYPE_NUM_t argTypeCount, const UK_EBPF_HELPER_ARG_TYPE_t argTypes[]);
+    HelperFunctionEntry* (*m_entry_constructor)(UK_UBPF_INDEX_t index,
+                                const char *function_name, const void *function_addr,
+                                const ebpf_return_type_t ret_type,
+                                const UK_EBPF_HELPER_ARG_TYPE_NUM_t argTypeCount,
+                                const ebpf_argument_type_t argTypes[]);
 
-    void (*m_entry_destructor)(struct HelperFunctionEntry *self);
-
-    HelperFunctionEntry *m_entries;
+    void (*m_entry_destructor)(struct HelperFunctionEntry *entry);
 } HelperFunctionList;
 
-struct HelperFunctionList *
-helper_function_list_init(size_t capacity,
-                          void (*entry_constructor)(HelperFunctionEntry *, const char *, const void *,
-                                                    const UK_EBPF_HELPER_RET_TYPE_t,
-                                                    const UK_EBPF_HELPER_ARG_TYPE_NUM_t, const UK_EBPF_HELPER_ARG_TYPE_t[]),
+HelperFunctionList *
+helper_function_list_init(HelperFunctionEntry* (*entry_constructor)(UK_UBPF_INDEX_t index,
+                                                    const char *function_name, const void *function_addr,
+                                                    const ebpf_return_type_t ret_type,
+                                                    const UK_EBPF_HELPER_ARG_TYPE_NUM_t arg_type_count,
+                                                    const ebpf_argument_type_t arg_types[]),
                           void (*destruct_entry)(struct HelperFunctionEntry *));
 
-bool helper_function_list_resize(HelperFunctionList *self, size_t new_capacity);
-
 bool helper_function_list_push_back(HelperFunctionList *self,
-                                    const char *functionName, const void *functionAddr, UK_EBPF_HELPER_RET_TYPE_t retType,
-                                    UK_EBPF_HELPER_ARG_TYPE_NUM_t argTypeCount, const UK_EBPF_HELPER_ARG_TYPE_t argTypes[]);
+                              UK_UBPF_INDEX_t index,
+                              const char *function_name, const void *function_addr, ebpf_return_type_t ret_type,
+                              UK_EBPF_HELPER_ARG_TYPE_NUM_t arg_type_count,
+                              const ebpf_argument_type_t arg_types[]);
 
-void helper_function_list_apply_function(HelperFunctionList *self, void (*apply)(struct HelperFunctionEntry *));
+void helper_function_list_remove_elem(HelperFunctionList *self, const char *function_name);
 
-void helper_function_list_remove_elem(HelperFunctionList *self, const char *label);
+void helper_function_list_apply_function(HelperFunctionList *self, void (*apply)(struct HelperFunctionEntry *entry));
 
-void helper_function_list_print(HelperFunctionList *self, void (*printer)(struct HelperFunctionEntry *));
+void helper_function_list_print(HelperFunctionList *self, void (*printer)(struct HelperFunctionEntry *entry));
 
 void helper_function_list_destroy(HelperFunctionList *self);
 
